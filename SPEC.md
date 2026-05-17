@@ -74,7 +74,7 @@ T20|x|seed refs/context7-cheatsheet.md from query-docs result|V3,V11
 T21|x|seed refs/examples/ with curated patterns from kitchen playgrounds|V3,V10,V11
 T22|x|write scripts/refresh-refs.ts (regen snapshots, bump SHA)|V11
 T23|x|verify checklist: V1 .. V14 ∀ pass|all
-T24|.|tag v0.1.0 + register in ari-marketplace/marketplace.json|V11,V12
+T24|x|tag v0.1.0 + register in ari-marketplace/marketplace.json|V11,V12
 
 ## §B BUGS
 
