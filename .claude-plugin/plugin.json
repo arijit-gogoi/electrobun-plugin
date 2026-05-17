@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json.schemastore.org/claude-plugin.json",
+  "name": "electrobun-plugin",
+  "version": "0.1.0",
+  "description": "Complete Electrobun skill: scaffold, debug, and reason about Electrobun apps (TypeScript + Bun + Zig + native bindings). Includes 9 sub-skills covering views, IPC/RPC, build/distribution, updater, WebGPU, system integration, architecture, and zig-as-main-process mode. Source-grounded via curated refs + live deepwiki/context7 fallback.",
+  "author": {
+    "name": "arijit-gogoi",
+    "email": "arijitnewmail@gmail.com",
+    "url": "https://github.com/arijit-gogoi"
+  },
+  "homepage": "https://github.com/arijit-gogoi/electrobun-plugin",
+  "repository": "https://github.com/arijit-gogoi/electrobun-plugin",
+  "license": "MIT",
+  "keywords": [
+    "electrobun",
+    "bun",
+    "desktop",
+    "webview",
+    "cross-platform",
+    "typescript",
+    "zig",
+    "electron-alternative",
+    "webgpu"
+  ]
+}
