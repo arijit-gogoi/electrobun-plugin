@@ -61,6 +61,18 @@ Items below were explicitly deferred during v0.2.0 planning. Each row records:
   - Bundle adds ~50KB to prod build → acceptable if opt-in.
   - Documented warning: "enabling prod devtools exposes app state to localhost; do not ship to end users".
 
+### Upstream electrobun: expose `ffi` and `BrowserWindowMap` via `exports` field
+
+- **Item:** electrobun's `package.json` `exports` field only exposes `"."`, `"./bun"`, `"./view"`. Anything deeper (`./dist/api/bun/proc/native`, `./dist/api/bun/core/BrowserWindow`) is unreachable from user code. This blocks `electrobun_ffi_log` for bundled apps in v0.2.x — devtools can't monkey-patch what it can't import.
+- **Cut from:** v0.2.x (the only fix is upstream).
+- **Likely target:** v0.3.0 (after upstream PR or workaround).
+- **Blockers:**
+  - Submit PR to `blackboardsh/electrobun` adding `"./internal/*": "./dist/*"` or similar to `exports`.
+  - OR find a different runtime mechanism: have `electrobun-devtools` patch electrobun BEFORE bundling. Tricky.
+  - OR have electrobun publish a `getInternals()` debug API that returns `{ ffi, BrowserWindowMap, ...}` — Yoav-cooperative.
+- **Discovered:** 2026-05-18 during full-validation E2E. 15/16 tools pass; ffi_log only fail.
+- **Workaround in v0.2.x:** `electrobun_ffi_log` returns 0 entries silently with a warning at devtools.start.
+
 ### `bun_eval` in Tier 2 with stronger gate
 
 - **Item:** Currently double-gated (token + `allowEval: true`). Want triple gate: per-call user confirmation in Claude Code UI.

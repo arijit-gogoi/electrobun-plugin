@@ -76,32 +76,57 @@ function wrapProxy<T extends Record<string, Function>>(ns: "request" | "internal
   }) as T;
 }
 
-export async function installFfiHook(): Promise<void> {
-  try {
-    // @ts-expect-error — dynamic, electrobun is peerDep
-    const mod = await import("electrobun/bun").catch(() => null);
-    if (!mod) {
-      console.warn("[electrobun-devtools] could not load electrobun/bun for FFI hook");
-      return;
-    }
+export async function installFfiHook(
+  provided?: { ffi?: { request?: Record<string, Function>; internal?: Record<string, Function> } },
+): Promise<void> {
+  let ffi = provided?.ffi as Record<string, unknown> | undefined;
 
-    // electrobun exposes `ffi` via a singleton; we look it up and replace its
-    // .request and .internal proxies. Path may vary across versions; best-effort.
-    const candidates = [
-      (mod as Record<string, unknown>).ffi,
-      (mod as Record<string, unknown>).native,
-      (mod as Record<string, unknown>).proc,
-    ].filter((x) => x && typeof x === "object") as Array<Record<string, unknown>>;
-
-    for (const c of candidates) {
-      if (typeof c.request === "object" && c.request !== null) {
-        c.request = wrapProxy("request", c.request as Record<string, Function>);
-      }
-      if (typeof c.internal === "object" && c.internal !== null) {
-        c.internal = wrapProxy("internal", c.internal as Record<string, Function>);
+  if (!ffi) {
+    // Fallback to dynamic import (works only in non-bundled contexts).
+    const candidatePaths = [
+      "electrobun/dist/api/bun/proc/native",
+      "electrobun/dist/api/bun/proc/native.ts",
+      "electrobun/bun",
+    ];
+    for (const path of candidatePaths) {
+      try {
+        // @ts-expect-error — dynamic
+        const mod = await import(path);
+        const candidate = (mod as Record<string, unknown>).ffi as Record<string, unknown> | undefined;
+        if (candidate && typeof candidate === "object") {
+          ffi = candidate;
+          break;
+        }
+      } catch {
+        // try next
       }
     }
-  } catch (err) {
-    console.warn("[electrobun-devtools] FFI hook install failed:", err instanceof Error ? err.message : err);
+  }
+
+  if (!ffi || typeof ffi !== "object") {
+    console.warn(
+      "[electrobun-devtools] could not locate electrobun ffi for hook install. " +
+        "For bundled builds, pass { electrobun: { ffi } } to devtools.start().",
+    );
+    return;
+  }
+
+  if (typeof ffi.request === "object" && ffi.request !== null) {
+    const orig = ffi.request as Record<string, Function>;
+    const wrapped = wrapProxy("request", orig);
+    for (const key of Object.keys(orig)) {
+      const fn = orig[key];
+      if (typeof fn !== "function") continue;
+      orig[key] = (wrapped as Record<string, Function>)[key];
+    }
+  }
+  if (typeof ffi.internal === "object" && ffi.internal !== null) {
+    const orig = ffi.internal as Record<string, Function>;
+    const wrapped = wrapProxy("internal", orig);
+    for (const key of Object.keys(orig)) {
+      const fn = orig[key];
+      if (typeof fn !== "function") continue;
+      orig[key] = (wrapped as Record<string, Function>)[key];
+    }
   }
 }

@@ -11,7 +11,7 @@
 import { startServer, type Server, type ServerOptions } from "./server.ts";
 import { installRpcHook, getRpcLog } from "./hooks/rpc.ts";
 import { installFfiHook, getFfiLog } from "./hooks/ffi.ts";
-import { installWindowHook, getKnownWindows, getUpdaterState } from "./hooks/windows.ts";
+import { installWindowHook, getKnownWindows, getUpdaterState, trackWindow } from "./hooks/windows.ts";
 import { getNativeLogWindows } from "./log-tail/windows.ts";
 
 const appLog: Array<{ ts: number; level: string; message: string }> = [];
@@ -47,6 +47,21 @@ export type StartOptions = Omit<ServerOptions, "tools"> & {
     windows?: boolean;
     appLog?: boolean;
   };
+  /**
+   * Provide direct references to electrobun symbols so hooks can monkey-patch
+   * the same instances the app already uses. Required for bundled builds where
+   * runtime `import("electrobun/...")` can't reach internals.
+   *
+   * Pass: { BrowserView, BrowserWindow, ffi }
+   * where ffi is the proxy object from "electrobun/dist/api/bun/proc/native".
+   */
+  electrobun?: {
+    BrowserView?: { defineRPC?: (cfg: Record<string, unknown>) => unknown };
+    BrowserWindow?: unknown;
+    BrowserWindowMap?: Record<number, unknown> | Map<unknown, unknown>;
+    ffi?: { request?: Record<string, Function>; internal?: Record<string, Function> };
+    Updater?: Record<string, unknown>;
+  };
 };
 
 let serverInstance: Server | null = null;
@@ -58,10 +73,11 @@ export async function start(opts: StartOptions = {}): Promise<Server> {
   }
 
   const hooks = opts.hooks ?? {};
+  const electrobun = opts.electrobun;
 
-  if (hooks.rpc !== false) await installRpcHook();
-  if (hooks.ffi !== false) await installFfiHook();
-  if (hooks.windows !== false) await installWindowHook();
+  if (hooks.rpc !== false) await installRpcHook(electrobun);
+  if (hooks.ffi !== false) await installFfiHook(electrobun);
+  if (hooks.windows !== false) await installWindowHook(electrobun);
   if (hooks.appLog !== false) patchConsoleForCapture();
 
   serverInstance = startServer({
@@ -74,8 +90,16 @@ export async function start(opts: StartOptions = {}): Promise<Server> {
         ({ entries: getFfiLog((args.sinceMs as number) ?? undefined, (args.lastN as number) ?? undefined) }),
       bun_eval: async (args) => {
         const code = String(args.code ?? "");
+        // Accept either an expression or a statement-body. If the code looks
+        // like a single expression (no statement keywords, no semicolons),
+        // wrap as `return (code)`. Otherwise treat as a function body and
+        // expect the caller to use a `return` statement.
+        const looksLikeExpression =
+          !/^\s*(let|const|var|if|for|while|try|switch|class|function|throw|return)\b/.test(code) &&
+          !code.trim().includes(";");
+        const body = looksLikeExpression ? `return (${code});` : code;
         // eslint-disable-next-line no-new-func
-        const result = await (new Function(`return (async () => { return (${code}); })()`))();
+        const result = await (new Function(`return (async () => { ${body} })()`))();
         return { result, type: typeof result };
       },
       updater_state: async () => ({ state: await getUpdaterState() }),
@@ -100,6 +124,6 @@ export function stop(): void {
   }
 }
 
-export const devtools = { start, stop };
+export const devtools = { start, stop, trackWindow };
 
 export type { Server, ServerOptions };

@@ -24,7 +24,7 @@ import {
 } from "./protocol.ts";
 
 // Resolved at runtime — published package reads from package.json.
-const PKG_VERSION = "0.2.0";
+const PKG_VERSION = "0.2.3";
 
 export type ToolHandler = (args: Record<string, unknown>) => Promise<unknown>;
 

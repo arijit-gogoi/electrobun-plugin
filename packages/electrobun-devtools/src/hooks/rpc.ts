@@ -28,29 +28,31 @@ export function getRpcLog(sinceMs?: number, lastN?: number): RpcLogEntry[] {
 }
 
 // Hook installer — called once on devtools.start().
-// Best-effort: if the upstream module shape changes, falls back to a no-op
-// and prints a warning. RPC log will be empty but everything else works.
-export async function installRpcHook(): Promise<void> {
+// Accepts user-supplied symbols (preferred for bundled builds where runtime
+// import("electrobun/...") cannot reach internals). Falls back to dynamic
+// import for non-bundled / dev situations.
+export async function installRpcHook(
+  provided?: { BrowserView?: { defineRPC?: (cfg: Record<string, unknown>) => unknown } },
+): Promise<void> {
   try {
-    // electrobun's RPC module path. May need adjustment per upstream version.
-    // We try the conventional export first.
-    // @ts-expect-error — runtime dynamic import, electrobun is peerDep
-    const mod = (await import("electrobun/dist/api/bun/index.ts").catch(() => null)) ??
-      // @ts-expect-error — dynamic
-      (await import("electrobun/bun").catch(() => null));
+    let BrowserView = provided?.BrowserView;
 
-    if (!mod || typeof mod !== "object") {
-      console.warn("[electrobun-devtools] could not locate electrobun bun-side API for RPC hook");
-      return;
+    if (!BrowserView) {
+      // @ts-expect-error — dynamic
+      const mod = (await import("electrobun/dist/api/bun/index.ts").catch(() => null)) ??
+        // @ts-expect-error — dynamic
+        (await import("electrobun/bun").catch(() => null));
+
+      if (mod && typeof mod === "object") {
+        BrowserView = (mod as Record<string, unknown>).BrowserView as typeof BrowserView;
+      }
     }
 
-    // The BrowserView.defineRPC static method is the canonical entry point.
-    // We wrap it to intercept handlers + outbound calls.
-    const BrowserView = (mod as Record<string, unknown>).BrowserView as
-      | { defineRPC?: (cfg: Record<string, unknown>) => unknown }
-      | undefined;
     if (!BrowserView || typeof BrowserView.defineRPC !== "function") {
-      console.warn("[electrobun-devtools] BrowserView.defineRPC not found — RPC hook disabled");
+      console.warn(
+        "[electrobun-devtools] BrowserView.defineRPC not found — RPC hook disabled. " +
+          "For bundled builds, pass { electrobun: { BrowserView } } to devtools.start().",
+      );
       return;
     }
 

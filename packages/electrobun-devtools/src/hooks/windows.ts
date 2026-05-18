@@ -18,65 +18,71 @@ export function getKnownWindows(): WindowInfo[] {
   return [...tracked.values()];
 }
 
-export async function installWindowHook(): Promise<void> {
+export async function installWindowHook(
+  provided?: { BrowserWindowMap?: Record<number, unknown> | Map<unknown, unknown> },
+): Promise<void> {
   try {
-    // @ts-expect-error — dynamic
-    const mod = await import("electrobun/bun").catch(() => null);
-    if (!mod) return;
+    let browserWindowMap: Record<number, unknown> | Map<unknown, unknown> | undefined = provided?.BrowserWindowMap;
 
-    // Look for the BrowserWindowMap global the electrobun source maintains.
-    const browserWindowMap = (mod as Record<string, unknown>).BrowserWindowMap as
-      | Map<unknown, unknown>
-      | undefined;
-    if (browserWindowMap instanceof Map) {
-      // Snapshot via the live map.
+    if (!browserWindowMap) {
+      // Fallback to dynamic import (won't work in bundled builds)
+      const candidates = [
+        "electrobun/dist/api/bun/core/BrowserWindow",
+        "electrobun/dist/api/bun/core/BrowserWindow.ts",
+        "electrobun/bun",
+      ];
+      for (const path of candidates) {
+        try {
+          // @ts-expect-error — dynamic
+          const mod = await import(path);
+          const m = (mod as Record<string, unknown>).BrowserWindowMap;
+          if (m && (typeof m === "object" || m instanceof Map)) {
+            browserWindowMap = m as Record<number, unknown> | Map<unknown, unknown>;
+            break;
+          }
+        } catch {
+          // try next
+        }
+      }
+    }
+
+    if (browserWindowMap) {
       const sync = () => {
         tracked.clear();
-        for (const [k, v] of browserWindowMap.entries()) {
-          const win = v as { id?: number | string; title?: string; url?: string };
+        const entries = browserWindowMap instanceof Map
+          ? Array.from(browserWindowMap.entries())
+          : Object.entries(browserWindowMap);
+        for (const [k, v] of entries) {
+          const win = v as { id?: number | string; title?: string; url?: string; webview?: { url?: string } };
           tracked.set(k as number | string, {
-            id: k as number | string,
+            id: (typeof k === "string" ? Number(k) : k) as number | string,
             title: win.title,
-            url: win.url,
+            url: win.url ?? win.webview?.url,
           });
         }
       };
       sync();
-      // Poll cheaply — windows change infrequently.
       setInterval(sync, 1000).unref?.();
       return;
     }
 
-    // Fallback: wrap BrowserWindow constructor.
-    const BrowserWindow = (mod as Record<string, unknown>).BrowserWindow as
-      | (new (...args: unknown[]) => Record<string, unknown>)
-      | undefined;
-    if (!BrowserWindow) return;
-
-    let nextId = 1;
-    const patched = function (this: unknown, ...args: unknown[]) {
-      // @ts-expect-error — Reflect.construct
-      const instance = Reflect.construct(BrowserWindow, args, patched);
-      const id = nextId++;
-      const opts = (args[0] as Record<string, unknown>) ?? {};
-      tracked.set(id, {
-        id,
-        title: opts.title as string | undefined,
-        url: opts.url as string | undefined,
-        width: opts.width as number | undefined,
-        height: opts.height as number | undefined,
-      });
-      return instance;
-    };
-    Object.setPrototypeOf(patched, BrowserWindow);
-    patched.prototype = BrowserWindow.prototype;
-    (mod as Record<string, unknown>).BrowserWindow = patched;
+    // No BrowserWindowMap available (electrobun's exports field hides it).
+    // Fall back to: rely on user calling `trackWindow(win)` after creating each.
+    console.warn(
+      "[electrobun-devtools] BrowserWindowMap not reachable; call devtools.trackWindow(win) " +
+        "after each `new BrowserWindow(...)` to populate list_windows.",
+    );
   } catch (err) {
     console.warn(
       "[electrobun-devtools] window hook install failed:",
       err instanceof Error ? err.message : err,
     );
   }
+}
+
+export function trackWindow(win: { id?: number | string; title?: string; webview?: { url?: string } }): void {
+  if (win.id == null) return;
+  tracked.set(win.id, { id: win.id, title: win.title, url: win.webview?.url });
 }
 
 export async function getUpdaterState(): Promise<Record<string, unknown> | { error: string }> {
