@@ -133,27 +133,27 @@ T44|x|write src/mcp/tools/cdp/devtools.ts (open native devtools — CDP or fallb
 T45|x|write src/mcp/index.ts (MCP server, stdio, register tools, mount auth)|V15,V16
 T46|x|write scripts/build-mcp.ts (bun build → dist/mcp/index.js)|V18
 T47|x|run build, commit dist/mcp/index.js, verify .mcp.json wiring|V18
-T48|~|verify v0.2.0-b: 9 CDP tools functional + commit + tag v0.2.0-b|V15-V21
-T49|.|write packages/electrobun-devtools/src/server.ts (WS listen, token gen, persistent file)|V16,V19,V23,V24
-T50|.|write packages/electrobun-devtools/src/index.ts (devtools.start/stop API)|V19,V24
-T51|.|write packages/electrobun-devtools/src/hooks/rpc.ts (monkey-patch shared/rpc.ts)|V19,V24
-T52|.|write packages/electrobun-devtools/src/hooks/ffi.ts (monkey-patch bun/proc/native.ts)|V19,V24
-T53|.|write packages/electrobun-devtools/src/hooks/windows.ts (observe BrowserWindow lifecycle)|V19,V24
-T54|.|write packages/electrobun-devtools/src/log-tail/windows.ts (Get-WinEvent filtered)|V19,V25
-T55|.|write packages/electrobun-devtools/src/protocol.ts (version-locked handshake, message shapes)|V19
-T56|.|write src/mcp/transport/devtools-client.ts (WS client to electrobun-devtools)|V16
-T57|.|write src/mcp/tools/bridge/list_windows.ts|V16
-T58|.|write src/mcp/tools/bridge/rpc_log.ts|V16
-T59|.|write src/mcp/tools/bridge/ffi_log.ts|V16
-T60|.|write src/mcp/tools/bridge/bun_eval.ts (double-gated)|V16,V17
-T61|.|write src/mcp/tools/bridge/updater_state.ts|V16
-T62|.|write src/mcp/tools/bridge/app_log.ts (bun process console buffer)|V16
-T63|.|write src/mcp/tools/bridge/native_log.ts (Windows-first)|V16,V25
-T64|.|rebuild dist/mcp/index.js with bridge tools|V18
-T65|.|graphify own-code → graphify-out-self/|V22
-T66|.|verify V15-V25 ∀ pass + commit|V15-V25
-T67|.|publish electrobun-devtools to npm (public, no scope)|V19
-T68|.|tag v0.2.0 final + push|V11,V12
+T48|x|verify v0.2.0-b: 9 CDP tools functional + commit + tag v0.2.0-b|V15-V21
+T49|x|write packages/electrobun-devtools/src/server.ts (WS listen, token gen, persistent file)|V16,V19,V23,V24
+T50|x|write packages/electrobun-devtools/src/index.ts (devtools.start/stop API)|V19,V24
+T51|x|write packages/electrobun-devtools/src/hooks/rpc.ts (monkey-patch shared/rpc.ts)|V19,V24
+T52|x|write packages/electrobun-devtools/src/hooks/ffi.ts (monkey-patch bun/proc/native.ts)|V19,V24
+T53|x|write packages/electrobun-devtools/src/hooks/windows.ts (observe BrowserWindow lifecycle)|V19,V24
+T54|x|write packages/electrobun-devtools/src/log-tail/windows.ts (Get-WinEvent filtered)|V19,V25
+T55|x|write packages/electrobun-devtools/src/protocol.ts (version-locked handshake, message shapes)|V19
+T56|x|write src/mcp/transport/devtools-client.ts (WS client to electrobun-devtools)|V16
+T57|x|write src/mcp/tools/bridge/list_windows.ts|V16
+T58|x|write src/mcp/tools/bridge/rpc_log.ts|V16
+T59|x|write src/mcp/tools/bridge/ffi_log.ts|V16
+T60|x|write src/mcp/tools/bridge/bun_eval.ts (double-gated)|V16,V17
+T61|x|write src/mcp/tools/bridge/updater_state.ts|V16
+T62|x|write src/mcp/tools/bridge/app_log.ts (bun process console buffer)|V16
+T63|x|write src/mcp/tools/bridge/native_log.ts (Windows-first)|V16,V25
+T64|x|rebuild dist/mcp/index.js with bridge tools|V18
+T65|x|graphify own-code → graphify-out-self/|V22
+T66|x|verify V15-V25 ∀ pass + commit|V15-V25
+T67|x|publish electrobun-devtools to npm (public, no scope)|V19
+T68|~|tag v0.2.0 final + push|V11,V12
 T69|.|bump ari-marketplace electrobun → v0.2.0 + push|V11,V12
 
 ## §B BUGS

@@ -14090,6 +14090,11 @@ function requireToken(cfg) {
     throw new AuthError("No devSessionToken configured. Configure it in the plugin settings " + "(/plugin) \u2014 paste the token printed by `electrobun-devtools` " + "when your app starts in dev mode.");
   }
 }
+function requireEvalAllowed(cfg) {
+  if (!cfg.allowEval) {
+    throw new AuthError("bun_eval refused: allowEval is off. Set `allowEval: true` in the " + "plugin user config to enable code execution in the main process. " + "High blast radius \u2014 only enable for trusted sessions.");
+  }
+}
 
 // src/mcp/transport/cdp-client.ts
 class CDPError extends Error {
@@ -14563,8 +14568,272 @@ async function screenshot(cfg, args) {
   };
 }
 
+// src/mcp/transport/devtools-client.ts
+var PROTOCOL_VERSION = "0.2";
+class DevtoolsError extends Error {
+  kind;
+  constructor(message, kind) {
+    super(message);
+    this.kind = kind;
+    this.name = "DevtoolsError";
+  }
+}
+
+class DevtoolsClient {
+  port;
+  token;
+  host;
+  ws = null;
+  authed = false;
+  pending = new Map;
+  connecting = null;
+  nextId = 1;
+  constructor(port, token, host = "127.0.0.1") {
+    this.port = port;
+    this.token = token;
+    this.host = host;
+  }
+  versionsMatch(a, b) {
+    const [am, an] = a.split(".");
+    const [bm, bn] = b.split(".");
+    return am === bm && an === bn;
+  }
+  async connect() {
+    if (this.authed)
+      return;
+    if (this.connecting)
+      return this.connecting;
+    this.connecting = new Promise((resolve, reject) => {
+      if (!this.token) {
+        reject(new DevtoolsError("No devSessionToken. Configure it via plugin user-config.", "bad-token"));
+        return;
+      }
+      const ws = new WebSocket(`ws://${this.host}:${this.port}`);
+      this.ws = ws;
+      let helloHandled = false;
+      ws.addEventListener("message", (ev) => {
+        let msg;
+        try {
+          msg = JSON.parse(String(ev.data));
+        } catch {
+          return;
+        }
+        if (!helloHandled && msg.kind === "hello") {
+          helloHandled = true;
+          if (!this.versionsMatch(msg.protocolVersion, PROTOCOL_VERSION)) {
+            ws.close();
+            reject(new DevtoolsError(`electrobun-devtools protocol ${msg.protocolVersion} != plugin ${PROTOCOL_VERSION}. Upgrade electrobun-devtools (or the plugin).`, "version-mismatch"));
+            return;
+          }
+          ws.send(JSON.stringify({
+            kind: "auth",
+            token: this.token,
+            protocolVersion: PROTOCOL_VERSION
+          }));
+          return;
+        }
+        if (msg.kind === "auth-ok") {
+          this.authed = true;
+          resolve();
+          return;
+        }
+        if (msg.kind === "auth-error") {
+          reject(new DevtoolsError(msg.message, msg.reason));
+          ws.close();
+          return;
+        }
+        if (msg.kind === "tool-result") {
+          const pending = this.pending.get(msg.id);
+          if (!pending)
+            return;
+          this.pending.delete(msg.id);
+          if (msg.ok)
+            pending.resolve(msg.data);
+          else
+            pending.reject(new DevtoolsError(msg.error ?? "tool call failed"));
+        }
+      });
+      ws.addEventListener("error", () => {
+        reject(new DevtoolsError(`Could not reach electrobun-devtools at ws://${this.host}:${this.port}. ` + "Is your app running in dev mode and has it called `devtools.start({ port })`?", "transport"));
+      });
+      ws.addEventListener("close", () => {
+        this.ws = null;
+        this.authed = false;
+        this.connecting = null;
+        for (const { reject: reject2 } of this.pending.values()) {
+          reject2(new DevtoolsError("devtools connection closed", "transport"));
+        }
+        this.pending.clear();
+      });
+    });
+    return this.connecting;
+  }
+  async call(name, args = {}) {
+    await this.connect();
+    if (!this.ws || !this.authed) {
+      throw new DevtoolsError("not connected to electrobun-devtools", "transport");
+    }
+    const id = String(this.nextId++);
+    return new Promise((resolve, reject) => {
+      this.pending.set(id, { resolve, reject });
+      this.ws.send(JSON.stringify({ kind: "tool-call", id, name, args }));
+      setTimeout(() => {
+        if (this.pending.has(id)) {
+          this.pending.delete(id);
+          reject(new DevtoolsError(`tool '${name}' timed out`, "transport"));
+        }
+      }, 15000);
+    });
+  }
+  close() {
+    this.ws?.close();
+  }
+}
+var clients2 = new Map;
+function getDevtoolsClient(port, token) {
+  const key = `${port}:${token.slice(0, 8)}`;
+  let c = clients2.get(key);
+  if (!c) {
+    c = new DevtoolsClient(port, token);
+    clients2.set(key, c);
+  }
+  return c;
+}
+
+// src/mcp/tools/bridge/list_windows.ts
+var listWindowsSchema = {
+  name: "electrobun_list_windows",
+  description: "Enumerate BrowserWindow instances in the running app via electrobun-devtools (bun-side, distinct from CDP webview-level `electrobun_list_views`). Requires user's app to import + start electrobun-devtools.",
+  inputSchema: {
+    type: "object",
+    properties: {},
+    required: []
+  }
+};
+async function listWindows(cfg) {
+  requireToken(cfg);
+  const client = getDevtoolsClient(cfg.devtoolsPort, cfg.devSessionToken);
+  return await client.call("list_windows");
+}
+
+// src/mcp/tools/bridge/rpc_log.ts
+var rpcLogSchema = {
+  name: "electrobun_rpc_log",
+  description: "Recent bun\u2194webview RPC traffic captured by electrobun-devtools. Shows method name, direction, payload, and timestamp. Requires the user's app to import + start electrobun-devtools.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      sinceMs: { type: "number", default: 60000 },
+      lastN: { type: "number", default: 200 }
+    },
+    required: []
+  }
+};
+async function rpcLog(cfg, args) {
+  requireToken(cfg);
+  const client = getDevtoolsClient(cfg.devtoolsPort, cfg.devSessionToken);
+  return await client.call("rpc_log", args);
+}
+
+// src/mcp/tools/bridge/ffi_log.ts
+var ffiLogSchema = {
+  name: "electrobun_ffi_log",
+  description: "Recent native FFI calls bun has made (e.g. createWindow, loadURL, clipboardWriteText). Captured by electrobun-devtools via proxy around ffi.request/ffi.internal. Shows symbol name, args, result, duration.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      sinceMs: { type: "number", default: 60000 },
+      lastN: { type: "number", default: 200 }
+    },
+    required: []
+  }
+};
+async function ffiLog(cfg, args) {
+  requireToken(cfg);
+  const client = getDevtoolsClient(cfg.devtoolsPort, cfg.devSessionToken);
+  return await client.call("ffi_log", args);
+}
+
+// src/mcp/tools/bridge/bun_eval.ts
+var bunEvalSchema = {
+  name: "electrobun_bun_eval",
+  description: "Evaluate JavaScript in the bun MAIN PROCESS (not in a webview \u2014 for that use `electrobun_eval`). HIGH BLAST RADIUS. Requires `allowEval: true` in plugin user-config. Use sparingly to inspect state or trigger debug actions.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      code: { type: "string", description: "JavaScript to evaluate. Can be a single expression or a multi-line block ending in a return-value expression." }
+    },
+    required: ["code"]
+  }
+};
+async function bunEval(cfg, args) {
+  requireToken(cfg);
+  requireEvalAllowed(cfg);
+  const client = getDevtoolsClient(cfg.devtoolsPort, cfg.devSessionToken);
+  return await client.call("bun_eval", { code: args.code });
+}
+
+// src/mcp/tools/bridge/updater_state.ts
+var updaterStateSchema = {
+  name: "electrobun_updater_state",
+  description: "Get current state of the Updater singleton \u2014 version, channel, isChecking, isDownloading, localInfo (v1.18.0+). Useful for debugging update flows.",
+  inputSchema: {
+    type: "object",
+    properties: {},
+    required: []
+  }
+};
+async function updaterState(cfg) {
+  requireToken(cfg);
+  const client = getDevtoolsClient(cfg.devtoolsPort, cfg.devSessionToken);
+  return await client.call("updater_state");
+}
+
+// src/mcp/tools/bridge/app_log.ts
+var appLogSchema = {
+  name: "electrobun_app_log",
+  description: "Recent console output from the bun main process (console.log/info/warn/error). Captured by electrobun-devtools since the app started.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      sinceMs: { type: "number", default: 60000 },
+      lastN: { type: "number", default: 200 }
+    },
+    required: []
+  }
+};
+async function appLog(cfg, args) {
+  requireToken(cfg);
+  const client = getDevtoolsClient(cfg.devtoolsPort, cfg.devSessionToken);
+  return await client.call("app_log", args);
+}
+
+// src/mcp/tools/bridge/native_log.ts
+var nativeLogSchema = {
+  name: "electrobun_native_log",
+  description: "Recent native OS log entries (Windows Event Log) filtered to the running app process. v0.2 Windows-only; macOS (Console.app) + Linux (journalctl/syslog) planned per roadmap.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      sinceMs: { type: "number", default: 60000 },
+      lastN: { type: "number", default: 100 },
+      process: {
+        type: "string",
+        description: "Process name to filter Event Log entries by. Defaults to 'bun'.",
+        default: "bun"
+      }
+    },
+    required: []
+  }
+};
+async function nativeLog(cfg, args) {
+  requireToken(cfg);
+  const client = getDevtoolsClient(cfg.devtoolsPort, cfg.devSessionToken);
+  return await client.call("native_log", args);
+}
+
 // src/mcp/index.ts
-var PLUGIN_VERSION = "0.2.0-b";
+var PLUGIN_VERSION = "0.2.0";
 var server = new Server({ name: "electrobun", version: PLUGIN_VERSION }, { capabilities: { tools: {} } });
 var tools = [
   { schema: listViewsSchema, fn: (cfg) => listViews(cfg) },
@@ -14575,7 +14844,14 @@ var tools = [
   { schema: domSchema, fn: (cfg, a) => getDom(cfg, a) },
   { schema: consoleSchema, fn: (cfg, a) => getConsole(cfg, a) },
   { schema: networkSchema, fn: (cfg, a) => getNetwork(cfg, a) },
-  { schema: devtoolsSchema, fn: (cfg, a) => getDevtoolsUrl(cfg, a) }
+  { schema: devtoolsSchema, fn: (cfg, a) => getDevtoolsUrl(cfg, a) },
+  { schema: listWindowsSchema, fn: (cfg) => listWindows(cfg) },
+  { schema: rpcLogSchema, fn: (cfg, a) => rpcLog(cfg, a) },
+  { schema: ffiLogSchema, fn: (cfg, a) => ffiLog(cfg, a) },
+  { schema: bunEvalSchema, fn: (cfg, a) => bunEval(cfg, a) },
+  { schema: updaterStateSchema, fn: (cfg) => updaterState(cfg) },
+  { schema: appLogSchema, fn: (cfg, a) => appLog(cfg, a) },
+  { schema: nativeLogSchema, fn: (cfg, a) => nativeLog(cfg, a) }
 ];
 var toolByName = new Map(tools.map((t) => [t.schema.name, t]));
 server.setRequestHandler(ListToolsRequestSchema, async () => ({

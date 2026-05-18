@@ -27,7 +27,15 @@ import { navigate, navigateSchema } from "./tools/cdp/navigate.ts";
 import { reload, reloadSchema } from "./tools/cdp/reload.ts";
 import { screenshot, screenshotSchema } from "./tools/cdp/screenshot.ts";
 
-const PLUGIN_VERSION = "0.2.0-b";
+import { listWindows, listWindowsSchema } from "./tools/bridge/list_windows.ts";
+import { rpcLog, rpcLogSchema } from "./tools/bridge/rpc_log.ts";
+import { ffiLog, ffiLogSchema } from "./tools/bridge/ffi_log.ts";
+import { bunEval, bunEvalSchema } from "./tools/bridge/bun_eval.ts";
+import { updaterState, updaterStateSchema } from "./tools/bridge/updater_state.ts";
+import { appLog, appLogSchema } from "./tools/bridge/app_log.ts";
+import { nativeLog, nativeLogSchema } from "./tools/bridge/native_log.ts";
+
+const PLUGIN_VERSION = "0.2.0";
 
 const server = new Server(
   { name: "electrobun", version: PLUGIN_VERSION },
@@ -39,6 +47,7 @@ const server = new Server(
 type ToolFn = (cfg: ReturnType<typeof loadAuthConfig>, args: any) => Promise<unknown>;
 
 const tools: Array<{ schema: { name: string; description: string; inputSchema: unknown }; fn: ToolFn }> = [
+  // Tier 1 — CDP (webview-side, requires bundleCEF: true)
   { schema: listViewsSchema, fn: (cfg) => listViews(cfg) },
   { schema: evalSchema, fn: (cfg, a) => evalInView(cfg, a) },
   { schema: navigateSchema, fn: (cfg, a) => navigate(cfg, a) },
@@ -48,6 +57,15 @@ const tools: Array<{ schema: { name: string; description: string; inputSchema: u
   { schema: consoleSchema, fn: (cfg, a) => getConsole(cfg, a) },
   { schema: networkSchema, fn: (cfg, a) => getNetwork(cfg, a) },
   { schema: devtoolsSchema, fn: (cfg, a) => getDevtoolsUrl(cfg, a) },
+
+  // Tier 2 — bridge (bun-side, requires user app to import electrobun-devtools)
+  { schema: listWindowsSchema, fn: (cfg) => listWindows(cfg) },
+  { schema: rpcLogSchema, fn: (cfg, a) => rpcLog(cfg, a) },
+  { schema: ffiLogSchema, fn: (cfg, a) => ffiLog(cfg, a) },
+  { schema: bunEvalSchema, fn: (cfg, a) => bunEval(cfg, a) },
+  { schema: updaterStateSchema, fn: (cfg) => updaterState(cfg) },
+  { schema: appLogSchema, fn: (cfg, a) => appLog(cfg, a) },
+  { schema: nativeLogSchema, fn: (cfg, a) => nativeLog(cfg, a) },
 ];
 
 const toolByName = new Map(tools.map((t) => [t.schema.name, t]));
