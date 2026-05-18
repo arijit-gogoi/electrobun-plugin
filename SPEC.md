@@ -119,21 +119,21 @@ T30|x|amend .claude-plugin/plugin.json with userConfig fields|I(userConfig)
 T31|x|write .mcp.json (stdio, ${CLAUDE_PLUGIN_ROOT}/dist/mcp/index.js)|V15,V18
 T32|x|amend .gitignore (dist/ removed since committed, add graphify-out-self/, .electrobun-devtools-token)|V18,V22
 T33|x|verify v0.2.0-a structure pass + commit + tag v0.2.0-a|V15,V16,V17,V18,V19
-T34|.|write src/mcp/auth.ts (token check from userConfig env var)|V16
-T35|.|write src/mcp/transport/cdp-client.ts (WS to localhost:cdpPort)|V21
-T36|.|write src/mcp/tools/cdp/list_views.ts (CDP Target.getTargets)|V16,V21
-T37|.|write src/mcp/tools/cdp/eval.ts (CDP Runtime.evaluate)|V16,V21
-T38|.|write src/mcp/tools/cdp/navigate.ts (CDP Page.navigate)|V16,V21
-T39|.|write src/mcp/tools/cdp/reload.ts (CDP Page.reload)|V16,V21
-T40|.|write src/mcp/tools/cdp/screenshot.ts (CDP Page.captureScreenshot, return PNG)|V16,V21
-T41|.|write src/mcp/tools/cdp/dom.ts (CDP DOM.getDocument + DOM.outerHTML)|V16,V21
-T42|.|write src/mcp/tools/cdp/console.ts (CDP Console.messageAdded buffer)|V16,V21
-T43|.|write src/mcp/tools/cdp/network.ts (CDP Network.* events buffer)|V16,V21
-T44|.|write src/mcp/tools/cdp/devtools.ts (open native devtools — CDP or fallback)|V16,V21
-T45|.|write src/mcp/index.ts (MCP server, stdio, register tools, mount auth)|V15,V16
-T46|.|write scripts/build-mcp.ts (bun build → dist/mcp/index.js)|V18
-T47|.|run build, commit dist/mcp/index.js, verify .mcp.json wiring|V18
-T48|.|verify v0.2.0-b: 9 CDP tools functional + commit + tag v0.2.0-b|V15-V21
+T34|x|write src/mcp/auth.ts (token check from userConfig env var)|V16
+T35|x|write src/mcp/transport/cdp-client.ts (WS to localhost:cdpPort)|V21
+T36|x|write src/mcp/tools/cdp/list_views.ts (CDP Target.getTargets)|V16,V21
+T37|x|write src/mcp/tools/cdp/eval.ts (CDP Runtime.evaluate)|V16,V21
+T38|x|write src/mcp/tools/cdp/navigate.ts (CDP Page.navigate)|V16,V21
+T39|x|write src/mcp/tools/cdp/reload.ts (CDP Page.reload)|V16,V21
+T40|x|write src/mcp/tools/cdp/screenshot.ts (CDP Page.captureScreenshot, return PNG)|V16,V21
+T41|x|write src/mcp/tools/cdp/dom.ts (CDP DOM.getDocument + DOM.outerHTML)|V16,V21
+T42|x|write src/mcp/tools/cdp/console.ts (CDP Console.messageAdded buffer)|V16,V21
+T43|x|write src/mcp/tools/cdp/network.ts (CDP Network.* events buffer)|V16,V21
+T44|x|write src/mcp/tools/cdp/devtools.ts (open native devtools — CDP or fallback)|V16,V21
+T45|x|write src/mcp/index.ts (MCP server, stdio, register tools, mount auth)|V15,V16
+T46|x|write scripts/build-mcp.ts (bun build → dist/mcp/index.js)|V18
+T47|x|run build, commit dist/mcp/index.js, verify .mcp.json wiring|V18
+T48|~|verify v0.2.0-b: 9 CDP tools functional + commit + tag v0.2.0-b|V15-V21
 T49|.|write packages/electrobun-devtools/src/server.ts (WS listen, token gen, persistent file)|V16,V19,V23,V24
 T50|.|write packages/electrobun-devtools/src/index.ts (devtools.start/stop API)|V19,V24
 T51|.|write packages/electrobun-devtools/src/hooks/rpc.ts (monkey-patch shared/rpc.ts)|V19,V24
