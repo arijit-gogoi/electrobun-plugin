@@ -1,8 +1,8 @@
 {
   "$schema": "https://json.schemastore.org/claude-plugin.json",
   "name": "electrobun-plugin",
-  "version": "0.1.0",
-  "description": "Complete Electrobun skill: scaffold, debug, and reason about Electrobun apps (TypeScript + Bun + Zig + native bindings). Includes 9 sub-skills covering views, IPC/RPC, build/distribution, updater, WebGPU, system integration, architecture, and zig-as-main-process mode. Source-grounded via curated refs + live deepwiki/context7 fallback.",
+  "version": "0.2.0-a",
+  "description": "Complete Electrobun skill: scaffold, debug, reason about, AND drive running Electrobun apps via embedded MCP server. Skill: main SKILL.md + 9 sub-skills (scaffold, views, ipc-rpc, build-dist, updater, webgpu, system-integration, architecture, zig-main). MCP: 16 tools across CDP (webview) + custom bridge (bun process / RPC / FFI / updater / native logs). Source-grounded against upstream blackboardsh/electrobun. Companion npm pkg `electrobun-devtools` powers the bridge.",
   "author": {
     "name": "arijit-gogoi",
     "email": "arijitnewmail@gmail.com",
@@ -20,6 +20,33 @@
     "typescript",
     "zig",
     "electron-alternative",
-    "webgpu"
-  ]
+    "webgpu",
+    "mcp",
+    "claude-code-mcp",
+    "devtools",
+    "cdp"
+  ],
+  "userConfig": {
+    "devSessionToken": {
+      "type": "string",
+      "secret": true,
+      "description": "Session token printed by `electrobun-devtools` when your app starts in dev mode. Paste from your app's terminal. Stored in your app dir as `.electrobun-devtools-token` so you typically only paste once per project.",
+      "default": ""
+    },
+    "cdpPort": {
+      "type": "number",
+      "description": "Chrome DevTools Protocol port. Must match `chromiumFlags['remote-debugging-port']` in your electrobun.config.ts.",
+      "default": 9222
+    },
+    "devtoolsPort": {
+      "type": "number",
+      "description": "Local port the `electrobun-devtools` server listens on. Must match what `devtools.start({ port })` is called with.",
+      "default": 9876
+    },
+    "allowEval": {
+      "type": "boolean",
+      "description": "Allow Claude to evaluate arbitrary code in the bun main process via the `electrobun_bun_eval` tool. OFF by default — opt in deliberately. High blast radius; only enable for trusted sessions.",
+      "default": false
+    }
+  }
 }

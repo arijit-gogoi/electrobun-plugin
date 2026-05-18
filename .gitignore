@@ -1,8 +1,10 @@
 .cache/
 graphify-out/
+graphify-out-self/
 node_modules/
 *.log
 .DS_Store
 .idea/
 .vscode/
-dist/
+.electrobun-devtools-token
+bun.lockb
