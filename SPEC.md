@@ -153,8 +153,8 @@ T64|x|rebuild dist/mcp/index.js with bridge tools|V18
 T65|x|graphify own-code → graphify-out-self/|V22
 T66|x|verify V15-V25 ∀ pass + commit|V15-V25
 T67|x|publish electrobun-devtools to npm (public, no scope)|V19
-T68|~|tag v0.2.0 final + push|V11,V12
-T69|.|bump ari-marketplace electrobun → v0.2.0 + push|V11,V12
+T68|x|tag v0.2.0 final + push|V11,V12
+T69|~|bump ari-marketplace electrobun → v0.2.0 + push|V11,V12
 
 ## §B BUGS
 
