@@ -118,7 +118,7 @@ T29|x|mkdir src/mcp/{tools/cdp,tools/bridge,transport}, src/mcp/index.ts skeleto
 T30|x|amend .claude-plugin/plugin.json with userConfig fields|I(userConfig)
 T31|x|write .mcp.json (stdio, ${CLAUDE_PLUGIN_ROOT}/dist/mcp/index.js)|V15,V18
 T32|x|amend .gitignore (dist/ removed since committed, add graphify-out-self/, .electrobun-devtools-token)|V18,V22
-T33|~|verify v0.2.0-a structure pass + commit + tag v0.2.0-a|V15,V16,V17,V18,V19
+T33|x|verify v0.2.0-a structure pass + commit + tag v0.2.0-a|V15,V16,V17,V18,V19
 T34|.|write src/mcp/auth.ts (token check from userConfig env var)|V16
 T35|.|write src/mcp/transport/cdp-client.ts (WS to localhost:cdpPort)|V21
 T36|.|write src/mcp/tools/cdp/list_views.ts (CDP Target.getTargets)|V16,V21
