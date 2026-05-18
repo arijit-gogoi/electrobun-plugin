@@ -14284,7 +14284,7 @@ async function evalInView(cfg, args) {
 // src/mcp/tools/cdp/console.ts
 var consoleSchema = {
   name: "electrobun_console",
-  description: "Get recent console messages from a webview (log/info/warn/error/debug). Buffered per-view since the MCP server started observing.",
+  description: "Get recent console messages from a webview (log/info/warn/error/debug). Buffered per-view since the FIRST CALL to this tool \u2014 subscription is lazy. Call this once to start the buffer, then trigger events, then call again to read. Messages fired before the first call are NOT captured.",
   inputSchema: {
     type: "object",
     properties: {
@@ -14402,7 +14402,7 @@ async function getDom(cfg, args) {
 // src/mcp/tools/cdp/network.ts
 var networkSchema = {
   name: "electrobun_network",
-  description: "Get recent HTTP requests made by a webview. Returns method, url, status, mimeType, timestamp. Subscribed since the MCP first observed this view.",
+  description: "Get recent HTTP requests made by a webview. Returns method, url, status, mimeType, timestamp. Subscription is LAZY \u2014 buffer starts on the first call to this tool. Call once to start observing, then trigger requests, then call again to read entries. Requests fired before the first call are NOT captured.",
   inputSchema: {
     type: "object",
     properties: {

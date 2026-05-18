@@ -82,6 +82,7 @@ V22: graphify own-code → `graphify-out-self/` before tagging v0.2.0 final. Tra
 V23: Token = persistent file `.electrobun-devtools-token` in user's electrobun app dir, gitignored. Auto-generates on first `devtools.start()`. Regen via `--force-token` flag.
 V24: `electrobun-devtools` ships TS source, no bundling. User's bun resolves at install time.
 V25: Native log tail v0.2 = Windows only. macOS + Linux → roadmap.
+V26: ∀ event-buffer CDP tool (console, network) → first call subscribes lazily ∴ caller ! invoke once before triggering events. Document in tool description.
 
 ## §T TASKS
 
@@ -159,3 +160,4 @@ T69|x|bump ari-marketplace electrobun → v0.2.0 + push|V11,V12
 ## §B BUGS
 
 id|date|cause|fix
+B1|2026-05-18|`electrobun_network` lazy-subscribes on first call ∴ events fired before first call lost. E2E test caught it (0 entries when fetch happened pre-subscribe). Same shape applies to `electrobun_console`.|V26 added — tool descriptions ! note subscription semantics. Test rewritten: warm tool before triggering event.

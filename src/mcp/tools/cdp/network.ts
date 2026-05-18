@@ -7,7 +7,7 @@ import { ensureSession, getCDPClient } from "../../transport/cdp-client.ts";
 export const networkSchema = {
   name: "electrobun_network",
   description:
-    "Get recent HTTP requests made by a webview. Returns method, url, status, mimeType, timestamp. Subscribed since the MCP first observed this view.",
+    "Get recent HTTP requests made by a webview. Returns method, url, status, mimeType, timestamp. Subscription is LAZY — buffer starts on the first call to this tool. Call once to start observing, then trigger requests, then call again to read entries. Requests fired before the first call are NOT captured.",
   inputSchema: {
     type: "object",
     properties: {

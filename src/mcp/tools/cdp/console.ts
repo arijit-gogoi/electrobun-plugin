@@ -7,7 +7,7 @@ import { ensureSession, getCDPClient } from "../../transport/cdp-client.ts";
 export const consoleSchema = {
   name: "electrobun_console",
   description:
-    "Get recent console messages from a webview (log/info/warn/error/debug). Buffered per-view since the MCP server started observing.",
+    "Get recent console messages from a webview (log/info/warn/error/debug). Buffered per-view since the FIRST CALL to this tool — subscription is lazy. Call this once to start the buffer, then trigger events, then call again to read. Messages fired before the first call are NOT captured.",
   inputSchema: {
     type: "object",
     properties: {
