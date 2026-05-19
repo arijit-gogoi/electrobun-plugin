@@ -38,9 +38,9 @@ export async function installRpcHook(
     let BrowserView = provided?.BrowserView;
 
     if (!BrowserView) {
-      // @ts-expect-error — dynamic
+      // @ts-ignore — dynamic
       const mod = (await import("electrobun/dist/api/bun/index.ts").catch(() => null)) ??
-        // @ts-expect-error — dynamic
+        // @ts-ignore — dynamic
         (await import("electrobun/bun").catch(() => null));
 
       if (mod && typeof mod === "object") {

@@ -33,7 +33,7 @@ export async function installWindowHook(
       ];
       for (const path of candidates) {
         try {
-          // @ts-expect-error — dynamic
+          // @ts-ignore — dynamic
           const mod = await import(path);
           const m = (mod as Record<string, unknown>).BrowserWindowMap;
           if (m && (typeof m === "object" || m instanceof Map)) {
@@ -87,7 +87,7 @@ export function trackWindow(win: { id?: number | string; title?: string; webview
 
 export async function getUpdaterState(): Promise<Record<string, unknown> | { error: string }> {
   try {
-    // @ts-expect-error — dynamic
+    // @ts-ignore — dynamic
     const mod = await import("electrobun/bun").catch(() => null);
     if (!mod) return { error: "electrobun/bun not loadable" };
     const Updater = (mod as Record<string, unknown>).Updater as

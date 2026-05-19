@@ -11,7 +11,7 @@
     "build:mcp": "bun run scripts/build-mcp.ts",
     "build": "bun run build:mcp",
     "refresh-refs": "bun run scripts/refresh-refs.ts",
-    "verify": "bun tsc --noEmit && bun run build:mcp",
+    "verify": "bun run scripts/verify.ts",
     "graphify:self": "bash -c 'cd $(pwd) && python -c \"from graphify.detect import detect; from pathlib import Path; import json; r = detect(Path(\\\"src\\\")); print(json.dumps(r, indent=2))\"'"
   },
   "devDependencies": {

@@ -73,10 +73,16 @@ graphify-out-self/                 # gitignored own-code graph (V22)
 
 ```bash
 bun install                    # workspace install
-bun run build:mcp              # bundle src/mcp → dist/mcp/index.js
-bun tsc --noEmit               # type-check
+bun run verify                 # MUST pass before tagging — see below
 bun dist/mcp/index.js          # smoke-test MCP — should print "ready (16 tools)"
 ```
+
+`bun run verify` chains three steps (fail-fast):
+1. `claude plugin validate` — manifest schema (catches B2-class install failures)
+2. `bun tsc --noEmit`        — type-check src/mcp + packages/electrobun-devtools
+3. `bun run build:mcp`       — bundles dist/mcp/index.js (committed per V18)
+
+`claude` CLI must be on PATH. Step 1 is non-negotiable: schema drift means users can't install.
 
 ## SemVer policy
 

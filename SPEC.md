@@ -83,6 +83,7 @@ V23: Token = persistent file `.electrobun-devtools-token` in user's electrobun a
 V24: `electrobun-devtools` ships TS source, no bundling. User's bun resolves at install time.
 V25: Native log tail v0.2 = Windows only. macOS + Linux → roadmap.
 V26: ∀ event-buffer CDP tool (console, network) → first call subscribes lazily ∴ caller ! invoke once before triggering events. Document in tool description.
+V27: `bun run verify` ! pass before any tag push. Chain = `claude plugin validate` → `tsc --noEmit` → `build:mcp`. Manifest validate first ∵ B2 (v0.2.2 shipped invalid `userConfig`, install ⊥ on users). Cheap gate, prevents stale `dist/`.
 
 ## §T TASKS
 

@@ -90,7 +90,7 @@ export async function installFfiHook(
     ];
     for (const path of candidatePaths) {
       try {
-        // @ts-expect-error — dynamic
+        // @ts-ignore — dynamic
         const mod = await import(path);
         const candidate = (mod as Record<string, unknown>).ffi as Record<string, unknown> | undefined;
         if (candidate && typeof candidate === "object") {
