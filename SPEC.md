@@ -161,3 +161,4 @@ T69|x|bump ari-marketplace electrobun → v0.2.0 + push|V11,V12
 
 id|date|cause|fix
 B1|2026-05-18|`electrobun_network` lazy-subscribes on first call ∴ events fired before first call lost. E2E test caught it (0 entries when fetch happened pre-subscribe). Same shape applies to `electrobun_console`.|V26 added — tool descriptions ! note subscription semantics. Test rewritten: warm tool before triggering event.
+B2|2026-05-19|Plugin install on user machine ⊥ — manifest validation errors: `userConfig.*.title` missing (required), `secret: true` unrecognized (should be `sensitive`). Schema came from outdated draft; current docs at code.claude.com require `title` + `sensitive`.|v0.2.3: add `title` to all 4 userConfig fields, rename `secret`→`sensitive`. Also wire `${user_config.KEY}` → env block in .mcp.json so token actually flows. `claude plugin validate` now passes.
