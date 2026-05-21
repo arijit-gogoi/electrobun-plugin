@@ -1,7 +1,7 @@
 // electrobun_eval — evaluate JS in a specific webview via CDP Runtime.evaluate.
 
 import type { AuthConfig } from "../../auth.ts";
-import { requireToken } from "../../auth.ts";
+
 import { ensureSession, getCDPClient } from "../../transport/cdp-client.ts";
 
 export const evalSchema = {
@@ -35,7 +35,6 @@ export type EvalResult = {
 };
 
 export async function evalInView(cfg: AuthConfig, args: EvalArgs): Promise<EvalResult> {
-  requireToken(cfg);
   const cdp = getCDPClient(cfg.cdpPort);
   await cdp.connect();
   const sessionId = await ensureSession(cdp, cfg.cdpPort, args.viewId);

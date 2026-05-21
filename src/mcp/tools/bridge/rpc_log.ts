@@ -1,7 +1,7 @@
 // electrobun_rpc_log — recent bun↔webview RPC traffic.
 
 import type { AuthConfig } from "../../auth.ts";
-import { requireToken } from "../../auth.ts";
+
 import { getDevtoolsClient } from "../../transport/devtools-client.ts";
 
 export const rpcLogSchema = {
@@ -19,7 +19,6 @@ export const rpcLogSchema = {
 } as const;
 
 export async function rpcLog(cfg: AuthConfig, args: { sinceMs?: number; lastN?: number }): Promise<unknown> {
-  requireToken(cfg);
-  const client = getDevtoolsClient(cfg.devtoolsPort, cfg.devSessionToken);
+  const client = getDevtoolsClient(cfg.devtoolsPort);
   return await client.call("rpc_log", args);
 }

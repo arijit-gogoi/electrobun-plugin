@@ -2,7 +2,7 @@
 // V25: Windows-first in v0.2; mac/Linux deferred (see specs/roadmap.md).
 
 import type { AuthConfig } from "../../auth.ts";
-import { requireToken } from "../../auth.ts";
+
 import { getDevtoolsClient } from "../../transport/devtools-client.ts";
 
 export const nativeLogSchema = {
@@ -28,7 +28,6 @@ export async function nativeLog(
   cfg: AuthConfig,
   args: { sinceMs?: number; lastN?: number; process?: string },
 ): Promise<unknown> {
-  requireToken(cfg);
-  const client = getDevtoolsClient(cfg.devtoolsPort, cfg.devSessionToken);
+  const client = getDevtoolsClient(cfg.devtoolsPort);
   return await client.call("native_log", args);
 }

@@ -6,7 +6,6 @@
         "${CLAUDE_PLUGIN_ROOT}/dist/mcp/index.js"
       ],
       "env": {
-        "ELECTROBUN_DEV_SESSION_TOKEN": "${user_config.devSessionToken}",
         "ELECTROBUN_CDP_PORT": "${user_config.cdpPort}",
         "ELECTROBUN_DEVTOOLS_PORT": "${user_config.devtoolsPort}",
         "ELECTROBUN_ALLOW_EVAL": "${user_config.allowEval}"

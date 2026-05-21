@@ -72,18 +72,19 @@ V12: SemVer per project CLAUDE.md: 0.x.Y patch, 0.X.0 minor (new sub-skill | ren
 V13: cavekit caveman encoding ∀ SPEC.md & spec-adjacent writes. Code blocks unchanged.
 V14: ⊥ redistribute electrobun source. Plugin tarball ! exclude `.cache/`.
 V15: MCP server transport = stdio. ⊥ websocket | http listener from MCP server.
-V16: ∀ MCP tool call ! pass session-token auth check before exec.
-V17: `bun_eval` ! double-gated: token AND `userConfig.allowEval == true`. ⊥ default-on.
+V16: ~~∀ MCP tool call ! pass session-token auth check before exec.~~ OBSOLETE v0.2.4 — see V28, B3.
+V17: `bun_eval` ! gated by `userConfig.allowEval == true`. ⊥ default-on. (Was double-gated, simplified in v0.2.4 with V16 removal.)
 V18: `dist/mcp/index.js` committed. Plugin install = users get bundled JS, ⊥ rebuild required.
 V19: `electrobun-devtools` published to npm as standalone slice from `packages/electrobun-devtools/`. Plugin & pkg version locked strict (major.minor).
 V20: ⊥ prod-mode instrumentation v0.2. Devtools lib ! check `process.env.NODE_ENV !== "production"` & refuse start in prod.
 V21: Tier 1 CDP ! work with `bundleCEF: true` & `chromiumFlags["remote-debugging-port"]` set. System-webview support deferred.
 V22: graphify own-code → `graphify-out-self/` before tagging v0.2.0 final. Tracks plugin-internal architecture drift.
-V23: Token = persistent file `.electrobun-devtools-token` in user's electrobun app dir, gitignored. Auto-generates on first `devtools.start()`. Regen via `--force-token` flag.
+V23: ~~Token = persistent file `.electrobun-devtools-token`...~~ OBSOLETE v0.2.4 — see V28, B3.
 V24: `electrobun-devtools` ships TS source, no bundling. User's bun resolves at install time.
 V25: Native log tail v0.2 = Windows only. macOS + Linux → roadmap.
 V26: ∀ event-buffer CDP tool (console, network) → first call subscribes lazily ∴ caller ! invoke once before triggering events. Document in tool description.
 V27: `bun run verify` ! pass before any tag push. Chain = `claude plugin validate` → `tsc --noEmit` → `build:mcp`. Manifest validate first ∵ B2 (v0.2.2 shipped invalid `userConfig`, install ⊥ on users). Cheap gate, prevents stale `dist/`.
+V28: ⊥ token auth. devtools WS server binds 127.0.0.1 only ∴ OS firewall = network perimeter. `bun_eval` gated by `allowEval=true` opt-in alone ∵ B3 — paste-token UX cost > local-process threat model for single-user dev box. Multi-user dev box scenario → roadmap (v0.4+, reintroduce as opt-in `requireToken: true` server flag).
 
 ## §T TASKS
 
@@ -163,3 +164,4 @@ T69|x|bump ari-marketplace electrobun → v0.2.0 + push|V11,V12
 id|date|cause|fix
 B1|2026-05-18|`electrobun_network` lazy-subscribes on first call ∴ events fired before first call lost. E2E test caught it (0 entries when fetch happened pre-subscribe). Same shape applies to `electrobun_console`.|V26 added — tool descriptions ! note subscription semantics. Test rewritten: warm tool before triggering event.
 B2|2026-05-19|Plugin install on user machine ⊥ — manifest validation errors: `userConfig.*.title` missing (required), `secret: true` unrecognized (should be `sensitive`). Schema came from outdated draft; current docs at code.claude.com require `title` + `sensitive`.|v0.2.3: add `title` to all 4 userConfig fields, rename `secret`→`sensitive`. Also wire `${user_config.KEY}` → env block in .mcp.json so token actually flows. `claude plugin validate` now passes.
+B3|2026-05-19|Token UX fail — user pasted token + ran `/reload-plugins`, MCP server still saw empty token. Even when fixed, paste-once-per-project = friction. Single-user dev box on 127.0.0.1 means token's threat model (other local processes) << UX cost. V16 was over-engineered.|v0.2.4: drop token entirely. Manifest field gone, AuthConfig.devSessionToken gone, requireToken() deleted, server skips token check. Plugin↔devtools handshake still version-locks. V16 obsoleted, replaced with V28 (rationale).

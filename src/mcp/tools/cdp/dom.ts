@@ -1,7 +1,7 @@
 // electrobun_dom — get serialized DOM of a webview.
 
 import type { AuthConfig } from "../../auth.ts";
-import { requireToken } from "../../auth.ts";
+
 import { ensureSession, getCDPClient } from "../../transport/cdp-client.ts";
 
 export const domSchema = {
@@ -22,7 +22,6 @@ export async function getDom(
   cfg: AuthConfig,
   args: { viewId: string; depth?: number },
 ): Promise<{ html: string }> {
-  requireToken(cfg);
   const cdp = getCDPClient(cfg.cdpPort);
   await cdp.connect();
   const sessionId = await ensureSession(cdp, cfg.cdpPort, args.viewId);

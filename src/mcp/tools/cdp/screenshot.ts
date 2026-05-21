@@ -1,7 +1,7 @@
 // electrobun_screenshot — capture a webview screenshot.
 
 import type { AuthConfig } from "../../auth.ts";
-import { requireToken } from "../../auth.ts";
+
 import { ensureSession, getCDPClient } from "../../transport/cdp-client.ts";
 
 export const screenshotSchema = {
@@ -24,7 +24,6 @@ export async function screenshot(
   cfg: AuthConfig,
   args: { viewId: string; format?: "png" | "jpeg"; quality?: number; fullPage?: boolean },
 ): Promise<{ mimeType: string; data: string }> {
-  requireToken(cfg);
   const cdp = getCDPClient(cfg.cdpPort);
   await cdp.connect();
   const sessionId = await ensureSession(cdp, cfg.cdpPort, args.viewId);

@@ -1,7 +1,7 @@
 // electrobun_list_windows — enumerate BrowserWindow instances via devtools bridge.
 
 import type { AuthConfig } from "../../auth.ts";
-import { requireToken } from "../../auth.ts";
+
 import { getDevtoolsClient } from "../../transport/devtools-client.ts";
 
 export const listWindowsSchema = {
@@ -16,7 +16,6 @@ export const listWindowsSchema = {
 } as const;
 
 export async function listWindows(cfg: AuthConfig): Promise<unknown> {
-  requireToken(cfg);
-  const client = getDevtoolsClient(cfg.devtoolsPort, cfg.devSessionToken);
+  const client = getDevtoolsClient(cfg.devtoolsPort);
   return await client.call("list_windows");
 }

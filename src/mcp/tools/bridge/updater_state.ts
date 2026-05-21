@@ -1,7 +1,7 @@
 // electrobun_updater_state — current state of the Updater.
 
 import type { AuthConfig } from "../../auth.ts";
-import { requireToken } from "../../auth.ts";
+
 import { getDevtoolsClient } from "../../transport/devtools-client.ts";
 
 export const updaterStateSchema = {
@@ -16,7 +16,6 @@ export const updaterStateSchema = {
 } as const;
 
 export async function updaterState(cfg: AuthConfig): Promise<unknown> {
-  requireToken(cfg);
-  const client = getDevtoolsClient(cfg.devtoolsPort, cfg.devSessionToken);
+  const client = getDevtoolsClient(cfg.devtoolsPort);
   return await client.call("updater_state");
 }

@@ -1,7 +1,7 @@
 // electrobun_network — recent HTTP requests in a webview.
 
 import type { AuthConfig } from "../../auth.ts";
-import { requireToken } from "../../auth.ts";
+
 import { ensureSession, getCDPClient } from "../../transport/cdp-client.ts";
 
 export const networkSchema = {
@@ -82,7 +82,6 @@ export async function getNetwork(
   cfg: AuthConfig,
   args: { viewId: string; sinceMs?: number; lastN?: number },
 ): Promise<{ entries: NetEntry[] }> {
-  requireToken(cfg);
   const sessionId = await ensureSubscribed(cfg, args.viewId);
   const key = `${cfg.cdpPort}:${sessionId}`;
   const buf = buffers.get(key) ?? [];

@@ -81,6 +81,15 @@ Items below were explicitly deferred during v0.2.0 planning. Each row records:
 - **Blockers:** Need MCP / Claude Code surface for per-call user prompts. May already exist; investigate.
 - **Notes:** Currently `bun_eval` either works (allowEval=true) or refuses (allowEval=false). v0.3: even if allowEval=true, each call shows the user "Allow Claude to run this code in your main process? [code preview]". Maps to Claude Code's existing tool-permission flow.
 
+### Optional token gate for multi-user dev boxes
+
+- **Item:** `devtools.start({ requireToken: true })` server flag. When set, WS server demands token in client handshake.
+- **Cut from:** v0.2.4 (token removed entirely, see B3 + V28). v0.2.0-v0.2.3 had default-on token; UX cost > security value on single-user dev boxes.
+- **Reason:** Multi-user dev boxes (shared workstations, jump hosts) need real auth. Reintroduce as opt-in, not default.
+- **Likely target:** v0.4.0+.
+- **Blockers:** UX — token must auto-read from file or env-var, NOT a userConfig paste field (that was B3).
+- **Notes:** Default off. Opt-in via flag.
+
 ### Multi-instance MCP (drive multiple electrobun apps simultaneously)
 
 - **Item:** Single MCP server connects to N running electrobun apps.

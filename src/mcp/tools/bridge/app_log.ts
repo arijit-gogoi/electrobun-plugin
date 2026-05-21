@@ -1,7 +1,7 @@
 // electrobun_app_log — recent bun process console output.
 
 import type { AuthConfig } from "../../auth.ts";
-import { requireToken } from "../../auth.ts";
+
 import { getDevtoolsClient } from "../../transport/devtools-client.ts";
 
 export const appLogSchema = {
@@ -19,7 +19,6 @@ export const appLogSchema = {
 } as const;
 
 export async function appLog(cfg: AuthConfig, args: { sinceMs?: number; lastN?: number }): Promise<unknown> {
-  requireToken(cfg);
-  const client = getDevtoolsClient(cfg.devtoolsPort, cfg.devSessionToken);
+  const client = getDevtoolsClient(cfg.devtoolsPort);
   return await client.call("app_log", args);
 }

@@ -140,7 +140,7 @@ build: {
 }
 ```
 
-Token: `electrobun-devtools` prints it once + saves to `.electrobun-devtools-token` in app dir. User pastes into plugin user-config (`/plugin`) once per project. `bun_eval` additionally requires `allowEval: true` opt-in (V17).
+No token (V28). devtools WS server binds 127.0.0.1; OS firewall blocks remote. `bun_eval` gated by `allowEval: true` opt-in alone (V17).
 
 ## Don't
 
@@ -148,6 +148,5 @@ Token: `electrobun-devtools` prints it once + saves to `.electrobun-devtools-tok
 - Don't redistribute upstream electrobun source.
 - Don't paraphrase electrobun docs without citing `file:line`.
 - Don't write prose where caveman fits (workspace convention — Ari uses /caveman mode).
-- Don't add MCP tools without a `requireToken(cfg)` call (V16).
-- Don't add code-exec tools without double-gating via `requireEvalAllowed(cfg)` (V17).
+- Don't add code-exec tools without `requireEvalAllowed(cfg)` gate (V17).
 - Don't bump plugin without bumping `electrobun-devtools` to matching major.minor (V19).

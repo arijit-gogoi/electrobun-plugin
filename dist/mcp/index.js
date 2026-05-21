@@ -14074,21 +14074,14 @@ class AuthError extends Error {
 }
 function loadAuthConfig() {
   const env = process.env;
-  const devSessionToken = env.ELECTROBUN_DEV_SESSION_TOKEN ?? env["CLAUDE_PLUGIN_CONFIG_devSessionToken"] ?? env["claude_plugin_config_devSessionToken"] ?? "";
   const cdpPortRaw = env.ELECTROBUN_CDP_PORT ?? env["CLAUDE_PLUGIN_CONFIG_cdpPort"] ?? "9222";
   const devtoolsPortRaw = env.ELECTROBUN_DEVTOOLS_PORT ?? env["CLAUDE_PLUGIN_CONFIG_devtoolsPort"] ?? "9876";
   const allowEvalRaw = env.ELECTROBUN_ALLOW_EVAL ?? env["CLAUDE_PLUGIN_CONFIG_allowEval"] ?? "false";
   return {
-    devSessionToken,
     cdpPort: Number.parseInt(cdpPortRaw, 10) || 9222,
     devtoolsPort: Number.parseInt(devtoolsPortRaw, 10) || 9876,
     allowEval: allowEvalRaw === "true" || allowEvalRaw === "1"
   };
-}
-function requireToken(cfg) {
-  if (!cfg.devSessionToken) {
-    throw new AuthError("No devSessionToken configured. Configure it in the plugin settings " + "(/plugin) \u2014 paste the token printed by `electrobun-devtools` " + "when your app starts in dev mode.");
-  }
 }
 function requireEvalAllowed(cfg) {
   if (!cfg.allowEval) {
@@ -14255,7 +14248,6 @@ var evalSchema = {
   }
 };
 async function evalInView(cfg, args) {
-  requireToken(cfg);
   const cdp = getCDPClient(cfg.cdpPort);
   await cdp.connect();
   const sessionId = await ensureSession(cdp, cfg.cdpPort, args.viewId);
@@ -14329,7 +14321,6 @@ async function ensureSubscribed(cfg, viewId) {
   return sessionId;
 }
 async function getConsole(cfg, args) {
-  requireToken(cfg);
   const sessionId = await ensureSubscribed(cfg, args.viewId);
   const key = `${cfg.cdpPort}:${sessionId}`;
   const buf = buffers.get(key) ?? [];
@@ -14352,7 +14343,6 @@ var devtoolsSchema = {
   }
 };
 async function getDevtoolsUrl(cfg, args) {
-  requireToken(cfg);
   const cdp = getCDPClient(cfg.cdpPort);
   const targets = await cdp.listTargets();
   const target = targets.find((t) => t.id === args.viewId);
@@ -14390,7 +14380,6 @@ var domSchema = {
   }
 };
 async function getDom(cfg, args) {
-  requireToken(cfg);
   const cdp = getCDPClient(cfg.cdpPort);
   await cdp.connect();
   const sessionId = await ensureSession(cdp, cfg.cdpPort, args.viewId);
@@ -14458,7 +14447,6 @@ async function ensureSubscribed2(cfg, viewId) {
   return sessionId;
 }
 async function getNetwork(cfg, args) {
-  requireToken(cfg);
   const sessionId = await ensureSubscribed2(cfg, args.viewId);
   const key = `${cfg.cdpPort}:${sessionId}`;
   const buf = buffers2.get(key) ?? [];
@@ -14479,7 +14467,6 @@ var listViewsSchema = {
   }
 };
 async function listViews(cfg) {
-  requireToken(cfg);
   const cdp = getCDPClient(cfg.cdpPort);
   const targets = await cdp.listTargets();
   return {
@@ -14506,7 +14493,6 @@ var navigateSchema = {
   }
 };
 async function navigate(cfg, args) {
-  requireToken(cfg);
   const cdp = getCDPClient(cfg.cdpPort);
   await cdp.connect();
   const sessionId = await ensureSession(cdp, cfg.cdpPort, args.viewId);
@@ -14527,7 +14513,6 @@ var reloadSchema = {
   }
 };
 async function reload(cfg, args) {
-  requireToken(cfg);
   const cdp = getCDPClient(cfg.cdpPort);
   await cdp.connect();
   const sessionId = await ensureSession(cdp, cfg.cdpPort, args.viewId);
@@ -14551,7 +14536,6 @@ var screenshotSchema = {
   }
 };
 async function screenshot(cfg, args) {
-  requireToken(cfg);
   const cdp = getCDPClient(cfg.cdpPort);
   await cdp.connect();
   const sessionId = await ensureSession(cdp, cfg.cdpPort, args.viewId);
@@ -14581,16 +14565,14 @@ class DevtoolsError extends Error {
 
 class DevtoolsClient {
   port;
-  token;
   host;
   ws = null;
   authed = false;
   pending = new Map;
   connecting = null;
   nextId = 1;
-  constructor(port, token, host = "127.0.0.1") {
+  constructor(port, host = "127.0.0.1") {
     this.port = port;
-    this.token = token;
     this.host = host;
   }
   versionsMatch(a, b) {
@@ -14604,10 +14586,6 @@ class DevtoolsClient {
     if (this.connecting)
       return this.connecting;
     this.connecting = new Promise((resolve, reject) => {
-      if (!this.token) {
-        reject(new DevtoolsError("No devSessionToken. Configure it via plugin user-config.", "bad-token"));
-        return;
-      }
       const ws = new WebSocket(`ws://${this.host}:${this.port}`);
       this.ws = ws;
       let helloHandled = false;
@@ -14627,7 +14605,6 @@ class DevtoolsClient {
           }
           ws.send(JSON.stringify({
             kind: "auth",
-            token: this.token,
             protocolVersion: PROTOCOL_VERSION
           }));
           return;
@@ -14690,12 +14667,11 @@ class DevtoolsClient {
   }
 }
 var clients2 = new Map;
-function getDevtoolsClient(port, token) {
-  const key = `${port}:${token.slice(0, 8)}`;
-  let c = clients2.get(key);
+function getDevtoolsClient(port) {
+  let c = clients2.get(port);
   if (!c) {
-    c = new DevtoolsClient(port, token);
-    clients2.set(key, c);
+    c = new DevtoolsClient(port);
+    clients2.set(port, c);
   }
   return c;
 }
@@ -14711,8 +14687,7 @@ var listWindowsSchema = {
   }
 };
 async function listWindows(cfg) {
-  requireToken(cfg);
-  const client = getDevtoolsClient(cfg.devtoolsPort, cfg.devSessionToken);
+  const client = getDevtoolsClient(cfg.devtoolsPort);
   return await client.call("list_windows");
 }
 
@@ -14730,8 +14705,7 @@ var rpcLogSchema = {
   }
 };
 async function rpcLog(cfg, args) {
-  requireToken(cfg);
-  const client = getDevtoolsClient(cfg.devtoolsPort, cfg.devSessionToken);
+  const client = getDevtoolsClient(cfg.devtoolsPort);
   return await client.call("rpc_log", args);
 }
 
@@ -14749,8 +14723,7 @@ var ffiLogSchema = {
   }
 };
 async function ffiLog(cfg, args) {
-  requireToken(cfg);
-  const client = getDevtoolsClient(cfg.devtoolsPort, cfg.devSessionToken);
+  const client = getDevtoolsClient(cfg.devtoolsPort);
   return await client.call("ffi_log", args);
 }
 
@@ -14767,9 +14740,8 @@ var bunEvalSchema = {
   }
 };
 async function bunEval(cfg, args) {
-  requireToken(cfg);
   requireEvalAllowed(cfg);
-  const client = getDevtoolsClient(cfg.devtoolsPort, cfg.devSessionToken);
+  const client = getDevtoolsClient(cfg.devtoolsPort);
   return await client.call("bun_eval", { code: args.code });
 }
 
@@ -14784,8 +14756,7 @@ var updaterStateSchema = {
   }
 };
 async function updaterState(cfg) {
-  requireToken(cfg);
-  const client = getDevtoolsClient(cfg.devtoolsPort, cfg.devSessionToken);
+  const client = getDevtoolsClient(cfg.devtoolsPort);
   return await client.call("updater_state");
 }
 
@@ -14803,8 +14774,7 @@ var appLogSchema = {
   }
 };
 async function appLog(cfg, args) {
-  requireToken(cfg);
-  const client = getDevtoolsClient(cfg.devtoolsPort, cfg.devSessionToken);
+  const client = getDevtoolsClient(cfg.devtoolsPort);
   return await client.call("app_log", args);
 }
 
@@ -14827,8 +14797,7 @@ var nativeLogSchema = {
   }
 };
 async function nativeLog(cfg, args) {
-  requireToken(cfg);
-  const client = getDevtoolsClient(cfg.devtoolsPort, cfg.devSessionToken);
+  const client = getDevtoolsClient(cfg.devtoolsPort);
   return await client.call("native_log", args);
 }
 

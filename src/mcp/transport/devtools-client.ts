@@ -1,11 +1,12 @@
 // WS client to electrobun-devtools server running inside the user's app.
-// Handles handshake, auth, version-lock check, request/response correlation.
+// Handles handshake, version-lock check, request/response correlation.
+// v0.2.4: token removed — server binds 127.0.0.1 only, single-user dev box.
 
 const PROTOCOL_VERSION = "0.2";
 const PLUGIN_VERSION = "0.2.0";
 
 export class DevtoolsError extends Error {
-  constructor(message: string, public kind?: "version-mismatch" | "bad-token" | "in-prod" | "transport") {
+  constructor(message: string, public kind?: "version-mismatch" | "in-prod" | "transport") {
     super(message);
     this.name = "DevtoolsError";
   }
@@ -24,7 +25,7 @@ export class DevtoolsClient {
   private connecting: Promise<void> | null = null;
   private nextId = 1;
 
-  constructor(private port: number, private token: string, private host = "127.0.0.1") {}
+  constructor(private port: number, private host = "127.0.0.1") {}
 
   private versionsMatch(a: string, b: string): boolean {
     const [am, an] = a.split(".");
@@ -37,11 +38,6 @@ export class DevtoolsClient {
     if (this.connecting) return this.connecting;
 
     this.connecting = new Promise<void>((resolve, reject) => {
-      if (!this.token) {
-        reject(new DevtoolsError("No devSessionToken. Configure it via plugin user-config.", "bad-token"));
-        return;
-      }
-
       const ws = new WebSocket(`ws://${this.host}:${this.port}`);
       this.ws = ws;
 
@@ -70,7 +66,6 @@ export class DevtoolsClient {
           ws.send(
             JSON.stringify({
               kind: "auth",
-              token: this.token,
               protocolVersion: PROTOCOL_VERSION,
             }),
           );
@@ -84,7 +79,7 @@ export class DevtoolsClient {
         }
 
         if (msg.kind === "auth-error") {
-          reject(new DevtoolsError(msg.message, msg.reason as "version-mismatch" | "bad-token" | "in-prod"));
+          reject(new DevtoolsError(msg.message, msg.reason as "version-mismatch" | "in-prod"));
           ws.close();
           return;
         }
@@ -145,17 +140,15 @@ export class DevtoolsClient {
   }
 }
 
-const clients = new Map<string, DevtoolsClient>();
+const clients = new Map<number, DevtoolsClient>();
 
-export function getDevtoolsClient(port: number, token: string): DevtoolsClient {
-  const key = `${port}:${token.slice(0, 8)}`;
-  let c = clients.get(key);
+export function getDevtoolsClient(port: number): DevtoolsClient {
+  let c = clients.get(port);
   if (!c) {
-    c = new DevtoolsClient(port, token);
-    clients.set(key, c);
+    c = new DevtoolsClient(port);
+    clients.set(port, c);
   }
   return c;
 }
 
-// Silence unused-import warnings if plugin version is referenced elsewhere.
 void PLUGIN_VERSION;

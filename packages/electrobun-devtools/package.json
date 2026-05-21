@@ -1,6 +1,6 @@
 {
   "name": "electrobun-devtools",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Dev-mode instrumentation lib for Electrobun apps. Drop into your `src/bun/index.ts` to expose runtime state to the electrobun-plugin MCP server (Claude Code). Read more at https://github.com/arijit-gogoi/electrobun-plugin",
   "license": "MIT",
   "author": "arijit-gogoi",

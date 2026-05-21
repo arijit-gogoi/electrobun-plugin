@@ -1,7 +1,7 @@
 // electrobun_navigate — navigate a webview to a URL.
 
 import type { AuthConfig } from "../../auth.ts";
-import { requireToken } from "../../auth.ts";
+
 import { ensureSession, getCDPClient } from "../../transport/cdp-client.ts";
 
 export const navigateSchema = {
@@ -22,7 +22,6 @@ export async function navigate(
   cfg: AuthConfig,
   args: { viewId: string; url: string },
 ): Promise<{ frameId: string; loaderId: string; errorText?: string }> {
-  requireToken(cfg);
   const cdp = getCDPClient(cfg.cdpPort);
   await cdp.connect();
   const sessionId = await ensureSession(cdp, cfg.cdpPort, args.viewId);

@@ -14,13 +14,12 @@ export type ServerHandshake = {
 
 export type ClientHandshake = {
   kind: "auth";
-  token: string;
   protocolVersion: string;
 };
 
 export type AuthResult =
   | { kind: "auth-ok" }
-  | { kind: "auth-error"; reason: "bad-token" | "version-mismatch" | "in-prod"; message: string };
+  | { kind: "auth-error"; reason: "version-mismatch" | "in-prod"; message: string };
 
 export type ToolCall = {
   kind: "tool-call";

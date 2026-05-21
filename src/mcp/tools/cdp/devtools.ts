@@ -1,7 +1,7 @@
 // electrobun_devtools — open native devtools UI for a webview.
 
 import type { AuthConfig } from "../../auth.ts";
-import { requireToken } from "../../auth.ts";
+
 import { getCDPClient } from "../../transport/cdp-client.ts";
 
 export const devtoolsSchema = {
@@ -21,7 +21,6 @@ export async function getDevtoolsUrl(
   cfg: AuthConfig,
   args: { viewId: string },
 ): Promise<{ devtoolsUrl: string | null; hint: string }> {
-  requireToken(cfg);
   const cdp = getCDPClient(cfg.cdpPort);
   const targets = await cdp.listTargets();
   const target = targets.find((t) => t.id === args.viewId);

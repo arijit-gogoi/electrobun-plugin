@@ -2,7 +2,7 @@
 // V17: DOUBLE-GATED. Token + userConfig.allowEval.
 
 import type { AuthConfig } from "../../auth.ts";
-import { requireEvalAllowed, requireToken } from "../../auth.ts";
+import { requireEvalAllowed } from "../../auth.ts";
 import { getDevtoolsClient } from "../../transport/devtools-client.ts";
 
 export const bunEvalSchema = {
@@ -19,8 +19,7 @@ export const bunEvalSchema = {
 } as const;
 
 export async function bunEval(cfg: AuthConfig, args: { code: string }): Promise<unknown> {
-  requireToken(cfg);
   requireEvalAllowed(cfg);
-  const client = getDevtoolsClient(cfg.devtoolsPort, cfg.devSessionToken);
+  const client = getDevtoolsClient(cfg.devtoolsPort);
   return await client.call("bun_eval", { code: args.code });
 }

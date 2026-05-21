@@ -1,7 +1,7 @@
 // electrobun_reload — reload a webview.
 
 import type { AuthConfig } from "../../auth.ts";
-import { requireToken } from "../../auth.ts";
+
 import { ensureSession, getCDPClient } from "../../transport/cdp-client.ts";
 
 export const reloadSchema = {
@@ -21,7 +21,6 @@ export async function reload(
   cfg: AuthConfig,
   args: { viewId: string; ignoreCache?: boolean },
 ): Promise<{ ok: true }> {
-  requireToken(cfg);
   const cdp = getCDPClient(cfg.cdpPort);
   await cdp.connect();
   const sessionId = await ensureSession(cdp, cfg.cdpPort, args.viewId);

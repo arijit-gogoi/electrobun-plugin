@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/claude-plugin.json",
   "name": "electrobun-plugin",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Complete Electrobun skill: scaffold, debug, reason about, AND drive running Electrobun apps via embedded MCP server. Skill: main SKILL.md + 9 sub-skills (scaffold, views, ipc-rpc, build-dist, updater, webgpu, system-integration, architecture, zig-main). MCP: 16 tools across CDP (webview) + custom bridge (bun process / RPC / FFI / updater / native logs). Source-grounded against upstream blackboardsh/electrobun. Companion npm pkg `electrobun-devtools` powers the bridge.",
   "author": {
     "name": "arijit-gogoi",
@@ -27,13 +27,6 @@
     "cdp"
   ],
   "userConfig": {
-    "devSessionToken": {
-      "type": "string",
-      "title": "Dev session token",
-      "description": "Session token printed by `electrobun-devtools` when your app starts in dev mode. Paste from your app's terminal. Stored in your app dir as `.electrobun-devtools-token` so you typically only paste once per project.",
-      "sensitive": true,
-      "default": ""
-    },
     "cdpPort": {
       "type": "number",
       "title": "CDP port",

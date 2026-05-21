@@ -1,7 +1,7 @@
 // electrobun_console — recent console messages from a webview.
 
 import type { AuthConfig } from "../../auth.ts";
-import { requireToken } from "../../auth.ts";
+
 import { ensureSession, getCDPClient } from "../../transport/cdp-client.ts";
 
 export const consoleSchema = {
@@ -65,7 +65,6 @@ export async function getConsole(
   cfg: AuthConfig,
   args: { viewId: string; level?: string; lastN?: number },
 ): Promise<{ messages: Msg[] }> {
-  requireToken(cfg);
   const sessionId = await ensureSubscribed(cfg, args.viewId);
   const key = `${cfg.cdpPort}:${sessionId}`;
   const buf = buffers.get(key) ?? [];

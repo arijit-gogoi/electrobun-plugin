@@ -1,7 +1,7 @@
 // electrobun_list_views — enumerate all CDP targets (page-type) in the running app.
 
 import type { AuthConfig } from "../../auth.ts";
-import { requireToken } from "../../auth.ts";
+
 import { getCDPClient } from "../../transport/cdp-client.ts";
 
 export const listViewsSchema = {
@@ -25,7 +25,6 @@ export type ListViewsResult = {
 };
 
 export async function listViews(cfg: AuthConfig): Promise<ListViewsResult> {
-  requireToken(cfg);
   const cdp = getCDPClient(cfg.cdpPort);
   const targets = await cdp.listTargets();
   return {
